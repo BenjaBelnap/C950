@@ -4,6 +4,21 @@ from hash import HashTable
 import pandas as pd
 import networkx as nx
 
+def distance_between(loc1, loc2, graph):
+    """
+    Returns the distance between two locations using the graph.
+    If the edge does not exist, returns None.
+    """
+    if graph.has_edge(loc1, loc2):
+        return graph[loc1][loc2]['weight']
+    return None
+
+def get_package_destination(package):
+    """
+    Returns the destination of a package in the format 'Address (Zip Code)'.
+    """
+    return f"{package.address}\n({package.zipCode})"
+
 if __name__ == "__main__":
     # Load the Excel file
     file_path = "WGUPS Distance Table.xlsx" 
@@ -55,6 +70,14 @@ if __name__ == "__main__":
         package = Package(address, deadline, delivered_at_time, city, zip_code, weight, status)
         package_table.insert(package_id, package)
         
+    ex_package = package_table.search(1)  # Example to search for package with ID 1
+    if ex_package:
+        print(f"Package ID 1: {ex_package.value.address}, {ex_package.value.city}, {ex_package.value.zipCode}")
+    else:
+        print("Package not found.")
+    package_destination = get_package_destination(ex_package.value)  # Get destination of the example package
+    print(package_destination)  # Example package destination
+    print(distance_between(package_destination, 'HUB', graph))  # Example distance check
 
     
     
