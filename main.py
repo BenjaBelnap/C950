@@ -1,6 +1,6 @@
-import hash
-import entities.truck as truck
-import entities.package as package
+from entities.truck import Truck
+from entities.package import Package
+from hash import HashTable
 import pandas as pd
 import networkx as nx
 
@@ -33,6 +33,28 @@ if __name__ == "__main__":
     #sanity checks
     edge_data = graph.get_edge_data('1060 Dalton Ave S\n(84104)', 'HUB')
     print(edge_data['weight'])  # Should print the distance between HUB and 1060 Dalton Ave S (84104)
+
+
+    # Load the package Excel file
+    package_file = "WGUPS Package File.xlsx"  # Update if your filename is different
+    df = pd.read_excel(package_file, header=7)  # Data starts at row 9 (header=8, 0-indexed)
+
+    package_table = HashTable(capacity=41) 
+
+    # Iterate through the DataFrame and insert packages
+    for _, row in df.iterrows():
+        package_id = int(row['Package\nID'])
+        address = row['Address']
+        city = row['City ']
+        zip_code = str(row['Zip'])
+        deadline = row['Delivery\nDeadline']
+        weight = row['Weight\nKILO']
+        status = "At Hub"  # Default status
+        delivered_at_time = None  # Default value
+
+        package = Package(address, deadline, delivered_at_time, city, zip_code, weight, status)
+        package_table.insert(package_id, package)
+        
 
     
     
