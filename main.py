@@ -3,6 +3,9 @@ from entities.package import Package
 from hash import HashTable
 import pandas as pd
 import networkx as nx
+from globals import State
+
+
 
 def distance_between(loc1, loc2, graph):
     """
@@ -26,7 +29,6 @@ if __name__ == "__main__":
 
     # Parse the data
     locations = df.iloc[1:, 1].tolist()  # Extract location names (column A, skipping the header)
-    cleaned_locations = []
 
 
 
@@ -64,20 +66,23 @@ if __name__ == "__main__":
         zip_code = str(row['Zip'])
         deadline = row['Delivery\nDeadline']
         weight = row['Weight\nKILO']
-        status = "At Hub"  # Default status
+        status = State.AT_HUB  # Default status is AT_HUB
         delivered_at_time = None  # Default value
 
         package = Package(address, deadline, delivered_at_time, city, zip_code, weight, status)
         package_table.insert(package_id, package)
         
-    ex_package = package_table.search(1)  # Example to search for package with ID 1
-    if ex_package:
-        print(f"Package ID 1: {ex_package.value.address}, {ex_package.value.city}, {ex_package.value.zipCode}")
-    else:
-        print("Package not found.")
-    package_destination = get_package_destination(ex_package.value)  # Get destination of the example package
-    print(package_destination)  # Example package destination
-    print(distance_between(package_destination, 'HUB', graph))  # Example distance check
+    # ex_package = package_table.search(1)  # Example to search for package with ID 1
+    # if ex_package:
+    #     print(f"Package ID 1: {ex_package.value.address}, {ex_package.value.city}, {ex_package.value.zipCode}", 
+    #           f"Status: {ex_package.value.status.value}, Deadline: {ex_package.value.deadline}",
+    #           f"Weight: {ex_package.value.weight} KILO")
+    # else:
+    #     print("Package not found.")
+    # package_destination = get_package_destination(ex_package.value)  # Get destination of the example package
+    # print(package_destination)  # Example package destination
+    # print(distance_between(package_destination, 'HUB', graph))  # Example distance check
 
+    
     
     
