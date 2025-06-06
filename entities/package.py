@@ -7,5 +7,7 @@ class Package:
         self.zipCode = zipCode
         self.weight = weight
         self.status = status
+        self.loadTime = None
+
         
 
