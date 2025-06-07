@@ -15,6 +15,7 @@ incorrect_address = {
     9: "410 S State St\n(84111)"
 }
 startTime = pd.to_datetime('08:00:00', format='%H:%M:%S')  # Start time of the simulation
+backToHubTime = pd.to_datetime('09:05:00', format='%H:%M:%S')  
 preferred_truck = {
     3: 2,
     18: 2,

@@ -4,3 +4,4 @@ class Truck:
         self.contents = contents
         self.mileage = mileage
         self.current_location = 'HUB'
+        self.current_time = None

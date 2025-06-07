@@ -5,7 +5,7 @@ from entities.package import Package
 from hash import HashTable
 import pandas as pd
 import networkx as nx
-from globals import State, speed, truck_capacity, delayed_packages, incorrect_address, startTime, preferred_truck, grouped_packages
+from globals import State, speed, truck_capacity, delayed_packages, incorrect_address, startTime, preferred_truck, grouped_packages, backToHubTime
 
 
 def load_truck(truck: Truck, package_table: HashTable, graph, current_time=startTime):
@@ -49,24 +49,27 @@ def load_truck(truck: Truck, package_table: HashTable, graph, current_time=start
                 if package_id in group_list:
                     group = group_list
                     break
-            if group:
-                # Only load group if all are available and fit
-                if any(package_table.search(pid).value.status != State.AT_HUB for pid in group):
-                    continue
-                if len(truck.contents) + len(group) > truck_capacity:
-                    continue
-                # Calculate distance for group
-                group_dest = get_package_destination(package_table.search(group[0]).value)
-                group_distance = distance_between(current_location, group_dest, graph)
-                if group_distance is not None and group_distance < closest_distance:
-                    closest_package = group
-                    closest_distance = group_distance
-                continue
+            # if group:
+            #     # Only load group if all are available and fit
+            #     if any(package_table.search(pid).value.status != State.AT_HUB for pid in group):
+            #         continue
+            #     if len(truck.contents) + len(group) > truck_capacity:
+            #         continue
+            #     # Calculate distance for group
+            #     group_dest = get_package_destination(package_table.search(group[0]).value)
+            #     group_distance = distance_between(current_location, group_dest, graph)
+            #     if group_distance is not None and group_distance < closest_distance:
+            #         closest_package = group
+            #         closest_distance = group_distance
+            #     continue
             # Deadline priority
-            if package.deadline and (closest_package is None or not hasattr(closest_package, 'deadline') or not closest_package.deadline):
-                closest_package = package
-                closest_distance = 0  # Force priority
-                break
+            if package.deadline:
+                deadline_dt = pd.to_datetime(str(package.deadline), format='%H:%M:%S')
+                if 0 < (deadline_dt - simulate_time).total_seconds() <= 4600:
+                    closest_package = package
+                    closest_distance = 0  # Force priority
+                    needs_optimization = True
+                    break
             # Greedy: closest distance
             distance = distance_between(current_location, destination, graph)
             if distance is None:
@@ -99,6 +102,16 @@ def load_truck(truck: Truck, package_table: HashTable, graph, current_time=start
         travel_time = pd.Timedelta(hours=closest_distance / speed)
         simulate_time += travel_time
 
+        #if this is the first load, make sure to be back right after backToHubTime
+        print(f"Truck {truck.key} loading package {closest_package.package_id} at time {simulate_time.time()}.")
+        if truck.mileage == 0 and truck.key == 1:
+            print(simulate_time, backToHubTime)
+            print(simulate_time  > backToHubTime)
+            if simulate_time  > backToHubTime:
+                break
+    print(f"Truck {truck.key} loaded with {len(truck.contents)} packages at time {simulate_time.time()}.") 
+            
+
 def send_truck(truck: Truck, graph, current_time=startTime):
     """
     Simulates sending the truck on its route.
@@ -117,6 +130,7 @@ def send_truck(truck: Truck, graph, current_time=startTime):
             simulate_time += travel_time
             package.deliveredAtTime = simulate_time.time()
             package.status = State.DELIVERED
+            package.delivered_by_truck = truck.key  # Track which truck delivered the package
             total_distance += distance
             current_location = destination
     truck.mileage += total_distance
@@ -154,13 +168,13 @@ def validate_deliveries(package_table, grouped_packages, preferred_truck, delaye
 
     # Grouped packages validation
     for group in grouped_packages:
-        delivered_times = set()
+        loaded_times = set()
         for pid in group:
             node = package_table.search(pid)
             if node:
-                delivered_times.add(node.value.deliveredAtTime)
-        if len(delivered_times) > 1:
-            print(f"Grouped packages {group} were not delivered together! Times: {delivered_times}")
+                loaded_times.add(node.value.loadTime)
+        if len(loaded_times) > 1:
+            print(f"Grouped packages {group} were not delivered together! Times: {loaded_times}")
             all_valid = False
 
     # Preferred truck validation
@@ -300,6 +314,7 @@ if __name__ == "__main__":
             load_truck(truck, package_table, graph, truck_times[idx])
             # Mark which truck delivers each package
             if truck.contents:
+                print(f"Truck {truck.key} loaded with {len(truck.contents)} packages.")
                 send_truck(truck, graph, truck_times[idx])
                 # Advance truck's time to last delivery
                 if truck.contents:
@@ -318,6 +333,8 @@ if __name__ == "__main__":
         print(f"Truck {truck.key} total mileage: {truck.mileage:.2f}")
 
     validate_deliveries(package_table, grouped_packages, preferred_truck, delayed_packages)
+    #package 6 loaded at time
+    print(f"Package 6 load time: {package_table.search(6).value.loadTime} package 6 delivered by truck: {package_table.search(6).value.delivered_by_truck}")
 
 
 
