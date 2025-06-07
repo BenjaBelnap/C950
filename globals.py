@@ -23,5 +23,5 @@ preferred_truck = {
     38: 2
 }
 grouped_packages = [
-    [15,13,19]
+    [16,14,20]
 ]

@@ -21,6 +21,56 @@ def load_truck(truck: Truck, package_table: HashTable, graph, current_time=start
     while len(truck.contents) < truck_capacity:
         closest_package = None
         closest_distance = float('inf')
+        group_loaded = False
+        # --- Handle groups: if any group member is available, try to load the whole group ---
+        group_loaded = False
+        for group in grouped_packages:
+            # Only consider group if all are at hub and not loaded
+            if all(package_table.search(pid).value.status == State.AT_HUB and pid not in loaded_ids for pid in group):
+                if len(truck.contents) + len(group) > truck_capacity:
+                    continue
+                # Pick the closest member of the group to current_location
+                min_dist = float('inf')
+                for pid in group:
+                    pkg = package_table.search(pid).value
+                    dest = get_package_destination(pkg)
+                    dist = distance_between(current_location, dest, graph)
+                    if dist is not None and dist < min_dist:
+                        min_dist = dist
+                        closest_pid = pid
+                closest_package = list(group)
+                closest_distance = min_dist
+                group_loaded = True
+                break  # Only load one group per iteration
+
+        if group_loaded and closest_package:
+            for pid in closest_package:
+                pkg = package_table.search(pid).value
+                pkg.status = State.IN_TRANSIT
+                pkg.loadTime = simulate_time.time()
+                truck.contents.append(pkg)
+                loaded_ids.add(pid)
+            # Move to the closest group member's destination
+            pkg = package_table.search(closest_pid).value
+            current_location = get_package_destination(pkg)
+            travel_time = pd.Timedelta(hours=closest_distance / speed)
+            simulate_time += travel_time
+            continue
+
+
+        if group_loaded and closest_package:
+            # Load the group
+            for pid in closest_package:
+                pkg = package_table.search(pid).value
+                pkg.status = State.IN_TRANSIT
+                pkg.loadTime = simulate_time.time()
+                truck.contents.append(pkg)
+                loaded_ids.add(pid)
+            current_location = get_package_destination(package_table.search(closest_package[0]).value)
+            travel_time = pd.Timedelta(hours=closest_distance / speed)
+            simulate_time += travel_time
+            continue  # Go to next iteration
+
         # Find all available packages
         for package_id in range(1, package_table.capacity):
             node = package_table.search(package_id)
@@ -65,7 +115,7 @@ def load_truck(truck: Truck, package_table: HashTable, graph, current_time=start
             # Deadline priority
             if package.deadline:
                 deadline_dt = pd.to_datetime(str(package.deadline), format='%H:%M:%S')
-                if 0 < (deadline_dt - simulate_time).total_seconds() <= 4600:
+                if 0 < (deadline_dt - simulate_time).total_seconds() <= 3600:
                     closest_package = package
                     closest_distance = 0  # Force priority
                     needs_optimization = True
