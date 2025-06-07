@@ -154,14 +154,14 @@ if __name__ == "__main__":
     truck1 = Truck(1,  None)
     truck2 = Truck(2,  None)
 
-    load_truck(truck1, package_table, graph)
-    print(f"Truck 1 loaded with {len(truck1.contents)} packages.")
-    print("Truck 1 contents:")
-    for package in truck1.contents:
-        print(f"Package ID: {package.address}, Status: {package.status.value}")
-    send_truck(truck1, graph)
-    print(f"Truck 1 sent to {truck1.current_location} with mileage: {truck1.mileage:.2f} miles.")
-
+    # load_truck(truck1, package_table, graph)
+    # print(f"Truck 1 loaded with {len(truck1.contents)} packages.")
+    # print("Truck 1 contents:")
+    # for package in truck1.contents:
+    #     print(f"Package ID: {package.address}, Status: {package.status.value}")
+    # send_truck(truck1, graph)
+    # print(f"Truck 1 sent to {truck1.current_location} with mileage: {truck1.mileage:.2f} miles.")
+    
 
 
     

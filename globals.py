@@ -15,3 +15,9 @@ incorrect_address = {
     9: "410 S State St\n(84111)"
 }
 startTime = pd.to_datetime('08:00:00', format='%H:%M:%S')  # Start time of the simulation
+
+grouped_packages = [
+    [15,14,19],
+    [16,13,19],
+    [20,13,19]
+]
